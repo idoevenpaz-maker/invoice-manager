@@ -16,7 +16,8 @@
     "@react-pdf/renderer": "^3.4.0",
     "uuid": "^9.0.0",
     "clsx": "^2.1.0",
-    "date-fns": "^3.6.0"
+    "date-fns": "^3.6.0",
+    "firebase": "^10.13.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.0",

@@ -1,66 +1,86 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore'
 import { v4 as uuidv4 } from 'uuid'
-import { STORAGE_KEYS } from '../constants'
+import { db } from '../firebase'
 import { generateNumber } from '../utils/numbering'
 import { useSettingsStore } from './useSettingsStore'
 
-export const useInvoiceStore = create(
-  persist(
-    (set, get) => ({
-      invoices: [],
+export const useInvoiceStore = create((set, get) => ({
+  invoices: [],
+  loading: true,
+  uid: null,
+  _unsubscribe: null,
 
-      addInvoice: (data) => {
-        const settings = useSettingsStore.getState()
-        const num = settings.bumpInvoiceNumber()
-        const number = generateNumber(settings.invoicePrefix, num)
+  init: (uid) => {
+    const prev = get()._unsubscribe
+    if (prev) prev()
 
-        const today = new Date().toISOString().split('T')[0]
-        const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    if (!uid) {
+      set({ invoices: [], uid: null, loading: false, _unsubscribe: null })
+      return
+    }
 
-        const invoice = {
-          id: uuidv4(),
-          number,
-          status: 'draft',
-          clientId: null,
-          issueDate: today,
-          dueDate,
-          lineItems: [],
-          taxRate: settings.defaultTaxRate,
-          discountType: 'none',
-          discountValue: 0,
-          notes: '',
-          currency: settings.currency,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          ...data,
-        }
-        set(s => ({ invoices: [...s.invoices, invoice] }))
-        return invoice
-      },
+    set({ uid, loading: true })
+    const q = collection(db, `users/${uid}/invoices`)
 
-      updateInvoice: (id, patch) => {
-        set(s => ({
-          invoices: s.invoices.map(inv =>
-            inv.id === id
-              ? { ...inv, ...patch, updatedAt: new Date().toISOString() }
-              : inv
-          )
-        }))
-      },
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const invoices = snap.docs.map(d => ({ ...d.data(), id: d.id }))
+      set({ invoices, loading: false })
+    })
 
-      deleteInvoice: (id) => {
-        set(s => ({ invoices: s.invoices.filter(inv => inv.id !== id) }))
-      },
+    set({ _unsubscribe: unsubscribe })
+  },
 
-      setStatus: (id, status) => {
-        get().updateInvoice(id, { status })
-      },
+  addInvoice: (data) => {
+    const { uid } = get()
+    if (!uid) return null
 
-      getById: (id) => get().invoices.find(inv => inv.id === id),
+    const settings = useSettingsStore.getState()
+    const num = settings.bumpInvoiceNumber()
+    const number = generateNumber(settings.invoicePrefix, num)
 
-      getByClient: (clientId) => get().invoices.filter(inv => inv.clientId === clientId),
-    }),
-    { name: STORAGE_KEYS.INVOICES }
-  )
-)
+    const today = new Date().toISOString().split('T')[0]
+    const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+    const invoice = {
+      id: uuidv4(),
+      number,
+      status: 'draft',
+      clientId: null,
+      issueDate: today,
+      dueDate,
+      lineItems: [],
+      taxRate: settings.defaultTaxRate,
+      discountType: 'none',
+      discountValue: 0,
+      notes: '',
+      currency: settings.currency,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...data,
+    }
+
+    setDoc(doc(db, `users/${uid}/invoices/${invoice.id}`), invoice).catch(console.error)
+    return invoice
+  },
+
+  updateInvoice: (id, patch) => {
+    const { uid } = get()
+    if (!uid) return
+    const update = { ...patch, updatedAt: new Date().toISOString() }
+    updateDoc(doc(db, `users/${uid}/invoices/${id}`), update).catch(console.error)
+  },
+
+  deleteInvoice: (id) => {
+    const { uid } = get()
+    if (!uid) return
+    deleteDoc(doc(db, `users/${uid}/invoices/${id}`)).catch(console.error)
+  },
+
+  setStatus: (id, status) => {
+    get().updateInvoice(id, { status })
+  },
+
+  getById: (id) => get().invoices.find(inv => inv.id === id),
+  getByClient: (clientId) => get().invoices.filter(inv => inv.clientId === clientId),
+}))

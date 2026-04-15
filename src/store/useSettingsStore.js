@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { STORAGE_KEYS } from '../constants'
+import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 
 const defaultSettings = {
   businessName: '',
@@ -21,25 +21,61 @@ const defaultSettings = {
   dateFormat: 'dd/MM/yyyy',
 }
 
-export const useSettingsStore = create(
-  persist(
-    (set, get) => ({
-      ...defaultSettings,
+export const useSettingsStore = create((set, get) => ({
+  ...defaultSettings,
+  loading: true,
+  uid: null,
+  _unsubscribe: null,
 
-      updateSettings: (patch) => set(patch),
+  init: (uid) => {
+    const prev = get()._unsubscribe
+    if (prev) prev()
 
-      bumpInvoiceNumber: () => {
-        const current = get().nextInvoiceNumber
-        set({ nextInvoiceNumber: current + 1 })
-        return current
-      },
+    if (!uid) {
+      set({ ...defaultSettings, uid: null, loading: false, _unsubscribe: null })
+      return
+    }
 
-      bumpReceiptNumber: () => {
-        const current = get().nextReceiptNumber
-        set({ nextReceiptNumber: current + 1 })
-        return current
-      },
-    }),
-    { name: STORAGE_KEYS.SETTINGS }
-  )
-)
+    set({ uid, loading: true })
+    const ref = doc(db, `users/${uid}/settings/main`)
+
+    const unsubscribe = onSnapshot(ref, async (snap) => {
+      if (snap.exists()) {
+        set({ ...snap.data(), loading: false })
+      } else {
+        await setDoc(ref, defaultSettings)
+        set({ ...defaultSettings, loading: false })
+      }
+    })
+
+    set({ _unsubscribe: unsubscribe })
+  },
+
+  updateSettings: (patch) => {
+    const { uid } = get()
+    set(patch)
+    if (uid) {
+      updateDoc(doc(db, `users/${uid}/settings/main`), patch).catch(console.error)
+    }
+  },
+
+  bumpInvoiceNumber: () => {
+    const { uid, nextInvoiceNumber } = get()
+    const current = nextInvoiceNumber
+    set({ nextInvoiceNumber: current + 1 })
+    if (uid) {
+      updateDoc(doc(db, `users/${uid}/settings/main`), { nextInvoiceNumber: current + 1 }).catch(console.error)
+    }
+    return current
+  },
+
+  bumpReceiptNumber: () => {
+    const { uid, nextReceiptNumber } = get()
+    const current = nextReceiptNumber
+    set({ nextReceiptNumber: current + 1 })
+    if (uid) {
+      updateDoc(doc(db, `users/${uid}/settings/main`), { nextReceiptNumber: current + 1 }).catch(console.error)
+    }
+    return current
+  },
+}))

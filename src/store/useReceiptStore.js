@@ -1,59 +1,79 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore'
 import { v4 as uuidv4 } from 'uuid'
-import { STORAGE_KEYS } from '../constants'
+import { db } from '../firebase'
 import { generateNumber } from '../utils/numbering'
 import { useSettingsStore } from './useSettingsStore'
 
-export const useReceiptStore = create(
-  persist(
-    (set, get) => ({
-      receipts: [],
+export const useReceiptStore = create((set, get) => ({
+  receipts: [],
+  loading: true,
+  uid: null,
+  _unsubscribe: null,
 
-      addReceipt: (data) => {
-        const settings = useSettingsStore.getState()
-        const num = settings.bumpReceiptNumber()
-        const number = generateNumber(settings.receiptPrefix, num)
+  init: (uid) => {
+    const prev = get()._unsubscribe
+    if (prev) prev()
 
-        const today = new Date().toISOString().split('T')[0]
+    if (!uid) {
+      set({ receipts: [], uid: null, loading: false, _unsubscribe: null })
+      return
+    }
 
-        const receipt = {
-          id: uuidv4(),
-          number,
-          invoiceId: null,
-          clientId: null,
-          date: today,
-          items: [],
-          paymentMethod: 'cash',
-          paymentReference: '',
-          notes: '',
-          currency: settings.currency,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          ...data,
-        }
-        set(s => ({ receipts: [...s.receipts, receipt] }))
-        return receipt
-      },
+    set({ uid, loading: true })
+    const q = collection(db, `users/${uid}/receipts`)
 
-      updateReceipt: (id, patch) => {
-        set(s => ({
-          receipts: s.receipts.map(r =>
-            r.id === id
-              ? { ...r, ...patch, updatedAt: new Date().toISOString() }
-              : r
-          )
-        }))
-      },
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const receipts = snap.docs.map(d => ({ ...d.data(), id: d.id }))
+      set({ receipts, loading: false })
+    })
 
-      deleteReceipt: (id) => {
-        set(s => ({ receipts: s.receipts.filter(r => r.id !== id) }))
-      },
+    set({ _unsubscribe: unsubscribe })
+  },
 
-      getById: (id) => get().receipts.find(r => r.id === id),
+  addReceipt: (data) => {
+    const { uid } = get()
+    if (!uid) return null
 
-      getByInvoice: (invoiceId) => get().receipts.filter(r => r.invoiceId === invoiceId),
-    }),
-    { name: STORAGE_KEYS.RECEIPTS }
-  )
-)
+    const settings = useSettingsStore.getState()
+    const num = settings.bumpReceiptNumber()
+    const number = generateNumber(settings.receiptPrefix, num)
+
+    const today = new Date().toISOString().split('T')[0]
+
+    const receipt = {
+      id: uuidv4(),
+      number,
+      invoiceId: null,
+      clientId: null,
+      date: today,
+      items: [],
+      paymentMethod: 'cash',
+      paymentReference: '',
+      notes: '',
+      currency: settings.currency,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...data,
+    }
+
+    setDoc(doc(db, `users/${uid}/receipts/${receipt.id}`), receipt).catch(console.error)
+    return receipt
+  },
+
+  updateReceipt: (id, patch) => {
+    const { uid } = get()
+    if (!uid) return
+    const update = { ...patch, updatedAt: new Date().toISOString() }
+    updateDoc(doc(db, `users/${uid}/receipts/${id}`), update).catch(console.error)
+  },
+
+  deleteReceipt: (id) => {
+    const { uid } = get()
+    if (!uid) return
+    deleteDoc(doc(db, `users/${uid}/receipts/${id}`)).catch(console.error)
+  },
+
+  getById: (id) => get().receipts.find(r => r.id === id),
+  getByInvoice: (invoiceId) => get().receipts.filter(r => r.invoiceId === invoiceId),
+}))

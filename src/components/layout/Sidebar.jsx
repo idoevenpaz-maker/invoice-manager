@@ -10,7 +10,7 @@ const navItems = [
   { to: '/settings',  label: 'הגדרות',      icon: '⚙️' },
 ]
 
-export function Sidebar() {
+export function Sidebar({ onLogout, user }) {
   const businessName = useSettingsStore(s => s.businessName)
 
   return (
@@ -48,8 +48,16 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="px-5 py-4 border-t border-brand-600 text-xs text-blue-300">
-        v1.0
+      <div className="px-5 py-4 border-t border-brand-600">
+        {user && (
+          <div className="text-xs text-blue-200 mb-2 truncate">{user.email}</div>
+        )}
+        <button
+          onClick={onLogout}
+          className="text-xs text-blue-300 hover:text-white transition-colors"
+        >
+          התנתק
+        </button>
       </div>
     </aside>
   )
