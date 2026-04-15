@@ -1,0 +1,22 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,jsx}'],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          500: '#1e3a5f',
+          600: '#162d4a',
+          700: '#0f2035',
+        }
+      },
+      fontFamily: {
+        sans: ['Noto Sans Hebrew', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+      }
+    }
+  },
+  plugins: []
+}
