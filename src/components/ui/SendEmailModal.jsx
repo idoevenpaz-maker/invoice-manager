@@ -2,33 +2,29 @@ import { useState } from 'react'
 import { Modal } from './Modal'
 import { Input } from './Input'
 import { Button } from './Button'
-import { sendDocumentEmail } from '../../utils/sendEmail'
+import { sendGmailEmail } from '../../utils/sendGmail'
+import { useAuthStore } from '../../store/useAuthStore'
 
 export function SendEmailModal({ isOpen, onClose, emailData }) {
   const [toEmail, setToEmail] = useState(emailData?.toEmail || '')
   const [status, setStatus]   = useState(null) // null | 'sending' | 'ok' | 'error'
   const [error, setError]     = useState('')
-
-  // Reset when modal opens with new data
-  const handleOpen = () => {
-    setToEmail(emailData?.toEmail || '')
-    setStatus(null)
-    setError('')
-  }
+  const accessToken = useAuthStore(s => s.accessToken)
 
   const handleSend = async () => {
-    if (!toEmail) {
-      setError('נא להזין כתובת אימייל')
-      return
-    }
+    if (!toEmail) { setError('נא להזין כתובת אימייל'); return }
     setStatus('sending')
     setError('')
     try {
-      await sendDocumentEmail({ ...emailData, toEmail })
+      await sendGmailEmail({ ...emailData, toEmail })
       setStatus('ok')
     } catch (e) {
       setStatus('error')
-      setError(e.message || 'שגיאה בשליחת האימייל')
+      setError(
+        e.message === 'NO_TOKEN'
+          ? 'פג תוקף ההתחברות — נא להתנתק ולהתחבר מחדש כדי לשלוח אימיילים.'
+          : (e.message || 'שגיאה בשליחת האימייל')
+      )
     }
   }
 
@@ -39,12 +35,7 @@ export function SendEmailModal({ isOpen, onClose, emailData }) {
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="שליחה באימייל"
-      size="sm"
-    >
+    <Modal isOpen={isOpen} onClose={handleClose} title="שליחה באימייל" size="sm">
       {status === 'ok' ? (
         <div className="text-center py-4">
           <div className="text-4xl mb-3">✅</div>
@@ -54,6 +45,12 @@ export function SendEmailModal({ isOpen, onClose, emailData }) {
         </div>
       ) : (
         <div className="space-y-4">
+          {!accessToken && (
+            <div className="bg-yellow-50 text-yellow-800 text-sm rounded-lg px-3 py-2">
+              ⚠️ כדי לשלוח מיילים יש להתנתק ולהתחבר מחדש עם Google.
+            </div>
+          )}
+
           <Input
             label="שלח אל"
             type="email"
@@ -69,12 +66,12 @@ export function SendEmailModal({ isOpen, onClose, emailData }) {
           </div>
 
           <p className="text-xs text-gray-400">
-            האימייל יכלול את כל פרטי המסמך כ-HTML מעוצב.
+            האימייל יישלח מחשבון ה-Gmail שלך ויכלול את כל פרטי המסמך.
           </p>
 
           <div className="flex justify-start gap-3 pt-1">
             <Button variant="secondary" onClick={handleClose}>ביטול</Button>
-            <Button onClick={handleSend} disabled={status === 'sending'}>
+            <Button onClick={handleSend} disabled={status === 'sending' || !accessToken}>
               {status === 'sending' ? 'שולח...' : '📧 שלח'}
             </Button>
           </div>
