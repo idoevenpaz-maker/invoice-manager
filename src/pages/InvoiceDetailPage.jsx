@@ -9,10 +9,12 @@ import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { InvoiceTotals } from '../components/invoice/InvoiceTotals'
+import { SendEmailModal } from '../components/ui/SendEmailModal'
 import { formatCurrency, formatDate, getDerivedStatus } from '../utils/formatters'
 import { useReceiptStore } from '../store/useReceiptStore'
 import { calcTotal } from '../utils/calculations'
 import { PAYMENT_METHODS } from '../constants'
+import { buildInvoiceEmail } from '../utils/emailHtml'
 
 export function InvoiceDetailPage() {
   const { id } = useParams()
@@ -31,6 +33,7 @@ export function InvoiceDetailPage() {
   const [isEditing, setIsEditing] = useState(isNew)
   const [showDelete, setShowDelete] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [emailOpen, setEmailOpen]   = useState(false)
 
   if (!isNew && !existingInvoice) {
     return (
@@ -116,6 +119,7 @@ export function InvoiceDetailPage() {
           {invoice.status !== 'paid' && (
             <Button variant="secondary" size="sm" onClick={handleMarkPaid}>סמן כשולם</Button>
           )}
+          <Button variant="secondary" size="sm" onClick={() => setEmailOpen(true)}>📧 שלח באימייל</Button>
           <Button variant="secondary" size="sm" onClick={handleConvertToReceipt}>צור קבלה</Button>
           <Button variant="secondary" size="sm" onClick={() => window.print()}>הדפס</Button>
           <Button variant="secondary" size="sm" disabled={pdfLoading} onClick={handleDownloadPDF}>
@@ -237,6 +241,12 @@ export function InvoiceDetailPage() {
         title="מחיקת חשבונית"
         message={`האם למחוק את חשבונית ${invoice.number}? פעולה זו אינה ניתנת לביטול.`}
         confirmLabel="מחק"
+      />
+
+      <SendEmailModal
+        isOpen={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        emailData={invoice && buildInvoiceEmail(invoice, getClient(invoice.clientId), settings)}
       />
     </PageWrapper>
   )

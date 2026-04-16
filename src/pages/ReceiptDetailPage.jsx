@@ -8,7 +8,9 @@ import { ReceiptForm } from '../components/receipt/ReceiptForm'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { Button } from '../components/ui/Button'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { SendEmailModal } from '../components/ui/SendEmailModal'
 import { formatCurrency, formatDate } from '../utils/formatters'
+import { buildReceiptEmail } from '../utils/emailHtml'
 import { calcReceiptTotal, calcTotal } from '../utils/calculations'
 import { PAYMENT_METHODS } from '../constants'
 import { v4 as uuidv4 } from 'uuid'
@@ -47,6 +49,7 @@ export function ReceiptDetailPage() {
   const [isEditing, setIsEditing] = useState(isNew)
   const [showDelete, setShowDelete] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [emailOpen, setEmailOpen]   = useState(false)
 
   if (!isNew && !existingReceipt) {
     return (
@@ -121,6 +124,7 @@ export function ReceiptDetailPage() {
       title={receipt.number}
       actions={
         <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setEmailOpen(true)}>📧 שלח באימייל</Button>
           <Button variant="secondary" size="sm" onClick={() => window.print()}>הדפס</Button>
           <Button variant="secondary" size="sm" disabled={pdfLoading} onClick={handleDownloadPDF}>
             {pdfLoading ? 'מייצר...' : 'הורד PDF'}
@@ -220,6 +224,12 @@ export function ReceiptDetailPage() {
         title="מחיקת קבלה"
         message={`האם למחוק את קבלה ${receipt.number}? פעולה זו אינה ניתנת לביטול.`}
         confirmLabel="מחק"
+      />
+
+      <SendEmailModal
+        isOpen={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        emailData={receipt && buildReceiptEmail(receipt, getClient(receipt.clientId), settings)}
       />
     </PageWrapper>
   )
