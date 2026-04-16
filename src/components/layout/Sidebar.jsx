@@ -13,7 +13,7 @@ const navItems = [
 
 export function Sidebar({ onLogout, user }) {
   const businessName = useSettingsStore(s => s.businessName)
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
 
   return (
     <aside
@@ -41,7 +41,7 @@ export function Sidebar({ onLogout, user }) {
           className="text-blue-200 hover:text-white transition-colors text-lg leading-none shrink-0"
           title={collapsed ? 'הרחב תפריט' : 'כווץ תפריט'}
         >
-          {collapsed ? '◀' : '▶'}
+          {collapsed ? '▶' : '◀'}
         </button>
       </div>
 
