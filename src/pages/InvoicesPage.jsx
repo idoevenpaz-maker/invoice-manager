@@ -7,15 +7,19 @@ import { InvoiceList } from '../components/invoice/InvoiceList'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
+import { ExportModal } from '../components/ui/ExportModal'
 import { getDerivedStatus } from '../utils/formatters'
+import { exportInvoicesToCsv } from '../utils/exportCsv'
 
 export function InvoicesPage() {
   const navigate = useNavigate()
   const invoices = useInvoiceStore(s => s.invoices)
+  const clients  = useClientStore(s => s.clients)
   const getClient = useClientStore(s => s.getById)
 
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [exportOpen, setExportOpen] = useState(false)
 
   const filtered = invoices
     .filter(inv => {
@@ -36,9 +40,13 @@ export function InvoicesPage() {
   return (
     <PageWrapper
       title="חשבוניות"
-      actions={<Button onClick={() => navigate('/invoices/new')}>+ חשבונית חדשה</Button>}
+      actions={
+        <>
+          <Button variant="secondary" onClick={() => setExportOpen(true)}>📊 ייצוא ל-Sheets</Button>
+          <Button onClick={() => navigate('/invoices/new')}>+ חשבונית חדשה</Button>
+        </>
+      }
     >
-      {/* Filters */}
       <div className="flex gap-3 mb-6">
         <Input
           placeholder="חיפוש לפי לקוח או מספר..."
@@ -57,6 +65,13 @@ export function InvoicesPage() {
       </div>
 
       <InvoiceList invoices={filtered} />
+
+      <ExportModal
+        isOpen={exportOpen}
+        onClose={() => setExportOpen(false)}
+        title="ייצוא חשבוניות ל-Google Sheets"
+        onExport={(from, to) => exportInvoicesToCsv(invoices, clients, from, to)}
+      />
     </PageWrapper>
   )
 }
