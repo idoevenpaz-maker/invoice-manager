@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useInvoiceStore } from '../store/useInvoiceStore'
 import { useClientStore } from '../store/useClientStore'
 import { useSettingsStore } from '../store/useSettingsStore'
@@ -19,23 +19,30 @@ import { buildInvoiceEmail } from '../utils/emailHtml'
 export function InvoiceDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const isNew = !id
 
   const addInvoice = useInvoiceStore(s => s.addInvoice)
   const updateInvoice = useInvoiceStore(s => s.updateInvoice)
   const deleteInvoice = useInvoiceStore(s => s.deleteInvoice)
-  const getInvoice = useInvoiceStore(s => s.getById)
+  const loading = useInvoiceStore(s => s.loading)
+  const storeInvoice = useInvoiceStore(s => id ? s.invoices.find(inv => inv.id === id) : null)
+  const navInvoice = id && location.state?.invoice?.id === id ? location.state.invoice : null
+  const existingInvoice = storeInvoice ?? navInvoice
   const getClient = useClientStore(s => s.getById)
   const settings = useSettingsStore()
 
-  const existingInvoice = id ? getInvoice(id) : null
-
-  const [isEditing, setIsEditing] = useState(isNew)
+  const [editMode, setEditMode] = useState(false)
+  const isEditing = isNew || editMode
   const [showDelete, setShowDelete] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailOpen, setEmailOpen]   = useState(false)
   const [emailPdfBlob, setEmailPdfBlob] = useState(null)
+
+  if (!isNew && loading && !navInvoice) {
+    return <PageWrapper title="טוען..."><div className="text-gray-400 text-sm">טוען חשבונית...</div></PageWrapper>
+  }
 
   if (!isNew && !existingInvoice) {
     return (
@@ -50,10 +57,10 @@ export function InvoiceDetailPage() {
   const handleSave = (formData) => {
     if (isNew) {
       const created = addInvoice(formData)
-      navigate(`/invoices/${created.id}`, { replace: true })
+      navigate(`/invoices/${created.id}`, { replace: true, state: { invoice: created } })
     } else {
       updateInvoice(id, formData)
-      setIsEditing(false)
+      setEditMode(false)
     }
   }
 
@@ -123,7 +130,7 @@ export function InvoiceDetailPage() {
           <InvoiceForm
             initial={isNew ? {} : invoice}
             onSave={handleSave}
-            onCancel={() => isNew ? navigate('/invoices') : setIsEditing(false)}
+            onCancel={() => isNew ? navigate('/invoices') : setEditMode(false)}
           />
         </div>
       </PageWrapper>
@@ -153,7 +160,7 @@ export function InvoiceDetailPage() {
           <Button variant="secondary" size="sm" disabled={pdfLoading} onClick={handleDownloadPDF}>
             {pdfLoading ? 'מייצר...' : 'הורד PDF'}
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>ערוך</Button>
+          <Button variant="secondary" size="sm" onClick={() => setEditMode(true)}>ערוך</Button>
           <Button variant="danger" size="sm" onClick={() => setShowDelete(true)}>מחק</Button>
         </div>
       }

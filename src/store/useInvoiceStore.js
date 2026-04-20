@@ -60,6 +60,7 @@ export const useInvoiceStore = create((set, get) => ({
       ...data,
     }
 
+    set(state => ({ invoices: [...state.invoices, invoice] }))
     setDoc(doc(db, `users/${uid}/invoices/${invoice.id}`), invoice).catch(console.error)
     return invoice
   },
@@ -68,6 +69,7 @@ export const useInvoiceStore = create((set, get) => ({
     const { uid } = get()
     if (!uid) return
     const update = { ...patch, updatedAt: new Date().toISOString() }
+    set(state => ({ invoices: state.invoices.map(inv => inv.id === id ? { ...inv, ...update } : inv) }))
     updateDoc(doc(db, `users/${uid}/invoices/${id}`), update).catch(console.error)
   },
 

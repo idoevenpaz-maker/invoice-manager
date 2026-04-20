@@ -57,6 +57,7 @@ export const useReceiptStore = create((set, get) => ({
       ...data,
     }
 
+    set(state => ({ receipts: [...state.receipts, receipt] }))
     setDoc(doc(db, `users/${uid}/receipts/${receipt.id}`), receipt).catch(console.error)
     return receipt
   },
@@ -65,6 +66,7 @@ export const useReceiptStore = create((set, get) => ({
     const { uid } = get()
     if (!uid) return
     const update = { ...patch, updatedAt: new Date().toISOString() }
+    set(state => ({ receipts: state.receipts.map(r => r.id === id ? { ...r, ...update } : r) }))
     updateDoc(doc(db, `users/${uid}/receipts/${id}`), update).catch(console.error)
   },
 

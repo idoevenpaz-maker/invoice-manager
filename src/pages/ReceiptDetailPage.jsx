@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useReceiptStore } from '../store/useReceiptStore'
 import { useInvoiceStore } from '../store/useInvoiceStore'
 import { useClientStore } from '../store/useClientStore'
@@ -18,19 +18,21 @@ import { v4 as uuidv4 } from 'uuid'
 export function ReceiptDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const isNew = !id
 
   const addReceipt = useReceiptStore(s => s.addReceipt)
   const updateReceipt = useReceiptStore(s => s.updateReceipt)
   const deleteReceipt = useReceiptStore(s => s.deleteReceipt)
-  const getReceipt = useReceiptStore(s => s.getById)
+  const loading = useReceiptStore(s => s.loading)
+  const storeReceipt = useReceiptStore(s => id ? s.receipts.find(r => r.id === id) : null)
+  const navReceipt = id && location.state?.receipt?.id === id ? location.state.receipt : null
+  const existingReceipt = storeReceipt ?? navReceipt
   const updateInvoice = useInvoiceStore(s => s.updateInvoice)
   const getInvoice = useInvoiceStore(s => s.getById)
   const getClient = useClientStore(s => s.getById)
   const settings = useSettingsStore()
-
-  const existingReceipt = id ? getReceipt(id) : null
 
   // Pre-fill from invoice if converting
   const fromInvoiceId = searchParams.get('fromInvoice')
@@ -46,12 +48,17 @@ export function ReceiptDetailPage() {
     }],
   } : {}
 
-  const [isEditing, setIsEditing] = useState(isNew)
+  const [editMode, setEditMode] = useState(false)
+  const isEditing = isNew || editMode
   const [showDelete, setShowDelete] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailOpen, setEmailOpen]   = useState(false)
   const [emailPdfBlob, setEmailPdfBlob] = useState(null)
+
+  if (!isNew && loading && !navReceipt) {
+    return <PageWrapper title="טוען..."><div className="text-gray-400 text-sm">טוען קבלה...</div></PageWrapper>
+  }
 
   if (!isNew && !existingReceipt) {
     return (
@@ -70,10 +77,10 @@ export function ReceiptDetailPage() {
       if (fromInvoiceId) {
         updateInvoice(fromInvoiceId, { status: 'paid' })
       }
-      navigate(`/receipts/${created.id}`, { replace: true })
+      navigate(`/receipts/${created.id}`, { replace: true, state: { receipt: created } })
     } else {
       updateReceipt(id, formData)
-      setIsEditing(false)
+      setEditMode(false)
     }
   }
 
@@ -133,7 +140,7 @@ export function ReceiptDetailPage() {
           <ReceiptForm
             initial={isNew ? initialOverrides : receipt}
             onSave={handleSave}
-            onCancel={() => isNew ? navigate('/receipts') : setIsEditing(false)}
+            onCancel={() => isNew ? navigate('/receipts') : setEditMode(false)}
           />
         </div>
       </PageWrapper>
@@ -157,7 +164,7 @@ export function ReceiptDetailPage() {
           <Button variant="secondary" size="sm" disabled={pdfLoading} onClick={handleDownloadPDF}>
             {pdfLoading ? 'מייצר...' : 'הורד PDF'}
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>ערוך</Button>
+          <Button variant="secondary" size="sm" onClick={() => setEditMode(true)}>ערוך</Button>
           <Button variant="danger" size="sm" onClick={() => setShowDelete(true)}>מחק</Button>
         </div>
       }
