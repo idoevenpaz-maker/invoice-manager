@@ -2,12 +2,9 @@ import React from 'react'
 import {
   Document, Page, View, Text, Image, StyleSheet
 } from '@react-pdf/renderer'
-import { registerHebrewFont } from './hebrewFont'
 import { calcReceiptTotal } from '../calculations'
 import { formatCurrency, formatDate } from '../formatters'
 import { PAYMENT_METHODS } from '../../constants'
-
-registerHebrewFont()
 
 const C = {
   navy:    '#1e3a5f',

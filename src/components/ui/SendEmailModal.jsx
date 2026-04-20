@@ -5,7 +5,7 @@ import { Button } from './Button'
 import { sendGmailEmail } from '../../utils/sendGmail'
 import { useAuthStore } from '../../store/useAuthStore'
 
-export function SendEmailModal({ isOpen, onClose, emailData }) {
+export function SendEmailModal({ isOpen, onClose, emailData, pdfBlob, pdfFilename }) {
   const [toEmail, setToEmail] = useState(emailData?.toEmail || '')
   const [status, setStatus]   = useState(null) // null | 'sending' | 'ok' | 'error'
   const [error, setError]     = useState('')
@@ -16,7 +16,7 @@ export function SendEmailModal({ isOpen, onClose, emailData }) {
     setStatus('sending')
     setError('')
     try {
-      await sendGmailEmail({ ...emailData, toEmail })
+      await sendGmailEmail({ ...emailData, toEmail, pdfBlob, pdfFilename })
       setStatus('ok')
     } catch (e) {
       setStatus('error')
@@ -64,6 +64,12 @@ export function SendEmailModal({ isOpen, onClose, emailData }) {
             <span className="font-medium text-gray-700">נושא: </span>
             {emailData?.subject}
           </div>
+
+          {pdfBlob && (
+            <div className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+              📎 {pdfFilename} יצורף כקובץ PDF
+            </div>
+          )}
 
           <p className="text-xs text-gray-400">
             האימייל יישלח מחשבון ה-Gmail שלך ויכלול את כל פרטי המסמך.

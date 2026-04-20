@@ -49,7 +49,9 @@ export function ReceiptDetailPage() {
   const [isEditing, setIsEditing] = useState(isNew)
   const [showDelete, setShowDelete] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
   const [emailOpen, setEmailOpen]   = useState(false)
+  const [emailPdfBlob, setEmailPdfBlob] = useState(null)
 
   if (!isNew && !existingReceipt) {
     return (
@@ -84,10 +86,12 @@ export function ReceiptDetailPage() {
     const client = getClient(receipt.clientId)
     setPdfLoading(true)
     try {
-      const [{ pdf }, { ReceiptPDF }] = await Promise.all([
+      const [{ pdf }, { ReceiptPDF }, { registerHebrewFont }] = await Promise.all([
         import('@react-pdf/renderer'),
         import('../utils/pdf/receiptPDF'),
+        import('../utils/pdf/hebrewFont'),
       ])
+      await registerHebrewFont()
       const blob = await pdf(<ReceiptPDF receipt={receipt} client={client} settings={settings} />).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -97,6 +101,28 @@ export function ReceiptDetailPage() {
       URL.revokeObjectURL(url)
     } finally {
       setPdfLoading(false)
+    }
+  }
+
+  const handleOpenEmailModal = async () => {
+    const client = getClient(receipt.clientId)
+    setEmailLoading(true)
+    try {
+      const [{ pdf }, { ReceiptPDF }, { registerHebrewFont }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('../utils/pdf/receiptPDF'),
+        import('../utils/pdf/hebrewFont'),
+      ])
+      await registerHebrewFont()
+      const blob = await pdf(<ReceiptPDF receipt={receipt} client={client} settings={settings} />).toBlob()
+      setEmailPdfBlob(blob)
+      setEmailOpen(true)
+    } catch (err) {
+      console.error('PDF generation for email failed:', err)
+      setEmailPdfBlob(null)
+      setEmailOpen(true)
+    } finally {
+      setEmailLoading(false)
     }
   }
 
@@ -124,7 +150,9 @@ export function ReceiptDetailPage() {
       title={receipt.number}
       actions={
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setEmailOpen(true)}>📧 שלח באימייל</Button>
+          <Button variant="secondary" size="sm" disabled={emailLoading} onClick={handleOpenEmailModal}>
+            {emailLoading ? 'מייצר...' : '📧 שלח באימייל'}
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => window.print()}>הדפס</Button>
           <Button variant="secondary" size="sm" disabled={pdfLoading} onClick={handleDownloadPDF}>
             {pdfLoading ? 'מייצר...' : 'הורד PDF'}
@@ -228,8 +256,10 @@ export function ReceiptDetailPage() {
 
       <SendEmailModal
         isOpen={emailOpen}
-        onClose={() => setEmailOpen(false)}
+        onClose={() => { setEmailOpen(false); setEmailPdfBlob(null) }}
         emailData={receipt && buildReceiptEmail(receipt, getClient(receipt.clientId), settings)}
+        pdfBlob={emailPdfBlob}
+        pdfFilename={receipt ? `${receipt.number}.pdf` : undefined}
       />
     </PageWrapper>
   )

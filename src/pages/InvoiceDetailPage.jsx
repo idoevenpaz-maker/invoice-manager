@@ -33,7 +33,9 @@ export function InvoiceDetailPage() {
   const [isEditing, setIsEditing] = useState(isNew)
   const [showDelete, setShowDelete] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
   const [emailOpen, setEmailOpen]   = useState(false)
+  const [emailPdfBlob, setEmailPdfBlob] = useState(null)
 
   if (!isNew && !existingInvoice) {
     return (
@@ -64,10 +66,12 @@ export function InvoiceDetailPage() {
     const client = getClient(invoice.clientId)
     setPdfLoading(true)
     try {
-      const [{ pdf }, { InvoicePDF }] = await Promise.all([
+      const [{ pdf }, { InvoicePDF }, { registerHebrewFont }] = await Promise.all([
         import('@react-pdf/renderer'),
         import('../utils/pdf/invoicePDF'),
+        import('../utils/pdf/hebrewFont'),
       ])
+      await registerHebrewFont()
       const blob = await pdf(<InvoicePDF invoice={invoice} client={client} settings={settings} />).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -77,6 +81,28 @@ export function InvoiceDetailPage() {
       URL.revokeObjectURL(url)
     } finally {
       setPdfLoading(false)
+    }
+  }
+
+  const handleOpenEmailModal = async () => {
+    const client = getClient(invoice.clientId)
+    setEmailLoading(true)
+    try {
+      const [{ pdf }, { InvoicePDF }, { registerHebrewFont }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('../utils/pdf/invoicePDF'),
+        import('../utils/pdf/hebrewFont'),
+      ])
+      await registerHebrewFont()
+      const blob = await pdf(<InvoicePDF invoice={invoice} client={client} settings={settings} />).toBlob()
+      setEmailPdfBlob(blob)
+      setEmailOpen(true)
+    } catch (err) {
+      console.error('PDF generation for email failed:', err)
+      setEmailPdfBlob(null)
+      setEmailOpen(true)
+    } finally {
+      setEmailLoading(false)
     }
   }
 
@@ -119,7 +145,9 @@ export function InvoiceDetailPage() {
           {invoice.status !== 'paid' && (
             <Button variant="secondary" size="sm" onClick={handleMarkPaid}>סמן כשולם</Button>
           )}
-          <Button variant="secondary" size="sm" onClick={() => setEmailOpen(true)}>📧 שלח באימייל</Button>
+          <Button variant="secondary" size="sm" disabled={emailLoading} onClick={handleOpenEmailModal}>
+            {emailLoading ? 'מייצר...' : '📧 שלח באימייל'}
+          </Button>
           <Button variant="secondary" size="sm" onClick={handleConvertToReceipt}>צור קבלה</Button>
           <Button variant="secondary" size="sm" onClick={() => window.print()}>הדפס</Button>
           <Button variant="secondary" size="sm" disabled={pdfLoading} onClick={handleDownloadPDF}>
@@ -245,8 +273,10 @@ export function InvoiceDetailPage() {
 
       <SendEmailModal
         isOpen={emailOpen}
-        onClose={() => setEmailOpen(false)}
+        onClose={() => { setEmailOpen(false); setEmailPdfBlob(null) }}
         emailData={invoice && buildInvoiceEmail(invoice, getClient(invoice.clientId), settings)}
+        pdfBlob={emailPdfBlob}
+        pdfFilename={invoice ? `${invoice.number}.pdf` : undefined}
       />
     </PageWrapper>
   )
