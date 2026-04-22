@@ -107,7 +107,7 @@ export function ReceiptPDF({ receipt, client, settings }) {
         ))}
 
         {/* Total */}
-        <View style={{ alignItems: 'flex-start' }}>
+        <View style={{ alignItems: 'flex-end' }}>
           <View style={s.totalRow}>
             <Text style={s.totalText}>{fmt(total)}</Text>
             <Text style={s.totalText}>סה"כ</Text>
@@ -127,8 +127,6 @@ export function ReceiptPDF({ receipt, client, settings }) {
         {receipt.notes && (
           <Text style={[s.paymentText, { marginTop: 12 }]}>{receipt.notes}</Text>
         )}
-
-        <Text style={s.thankYou}>תודה על העסקה!</Text>
 
         {settings.invoiceFooter && (
           <View style={s.footer}>

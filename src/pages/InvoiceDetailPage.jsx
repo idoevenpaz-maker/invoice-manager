@@ -128,7 +128,7 @@ export function InvoiceDetailPage() {
       <PageWrapper title={isNew ? 'חשבונית חדשה' : `עריכת ${invoice.number}`}>
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <InvoiceForm
-            initial={isNew ? {} : invoice}
+            initial={isNew ? { clientId: location.state?.clientId || '' } : invoice}
             onSave={handleSave}
             onCancel={() => isNew ? navigate('/invoices') : setEditMode(false)}
           />

@@ -1,14 +1,17 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useClientStore } from '../store/useClientStore'
 import { useInvoiceStore } from '../store/useInvoiceStore'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { ClientList } from '../components/client/ClientList'
 import { ClientForm } from '../components/client/ClientForm'
 import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 
 export function ClientsPage() {
+  const navigate = useNavigate()
   const clients = useClientStore(s => s.clients)
   const addClient = useClientStore(s => s.addClient)
   const updateClient = useClientStore(s => s.updateClient)
@@ -18,6 +21,18 @@ export function ClientsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [search, setSearch] = useState('')
+
+  const filteredClients = search.trim()
+    ? clients.filter(c => {
+        const q = search.toLowerCase()
+        return (
+          c.name?.toLowerCase().includes(q) ||
+          c.company?.toLowerCase().includes(q) ||
+          c.email?.toLowerCase().includes(q)
+        )
+      })
+    : clients
 
   const handleSave = (formData) => {
     if (editingClient) {
@@ -55,11 +70,23 @@ export function ClientsPage() {
       title="לקוחות"
       actions={<Button onClick={handleNew}>+ לקוח חדש</Button>}
     >
+      {/* Search bar */}
+      <div className="mb-5">
+        <Input
+          placeholder="חיפוש לקוח לפי שם, חברה או אימייל..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="max-w-md"
+        />
+      </div>
+
       <ClientList
-        clients={clients}
+        clients={filteredClients}
         onEdit={handleEdit}
         onDelete={setDeleteTarget}
         onNew={handleNew}
+        onNewInvoice={clientId => navigate('/invoices/new', { state: { clientId } })}
+        onNewReceipt={clientId => navigate('/receipts/new', { state: { clientId } })}
       />
 
       <Modal

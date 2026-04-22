@@ -46,7 +46,7 @@ export function ReceiptDetailPage() {
       description: `תשלום עבור חשבונית ${sourceInvoice.number}`,
       amount: calcTotal(sourceInvoice.lineItems, sourceInvoice.taxRate, sourceInvoice.discountType, sourceInvoice.discountValue).total,
     }],
-  } : {}
+  } : location.state?.clientId ? { clientId: location.state.clientId } : {}
 
   const [editMode, setEditMode] = useState(false)
   const isEditing = isNew || editMode

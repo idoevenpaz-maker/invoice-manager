@@ -1,12 +1,20 @@
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts'
 import { useInvoiceStore } from '../store/useInvoiceStore'
 import { useReceiptStore } from '../store/useReceiptStore'
+import { useClientStore } from '../store/useClientStore'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { formatCurrency, formatDate, getDerivedStatus } from '../utils/formatters'
 import { calcTotal, calcReceiptTotal } from '../utils/calculations'
-import { useClientStore } from '../store/useClientStore'
+
+const MONTHS_HE = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ']
+const PIE_COLORS = ['#1e3a5f', '#2d5282', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#1d4ed8']
 
 function StatCard({ label, value, sub, color = 'text-gray-900' }) {
   return (
@@ -18,17 +26,32 @@ function StatCard({ label, value, sub, color = 'text-gray-900' }) {
   )
 }
 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow text-sm">
+      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+      <p className="font-mono text-blue-700">{formatCurrency(payload[0].value)}</p>
+    </div>
+  )
+}
+
 export function Dashboard() {
   const navigate = useNavigate()
   const invoices = useInvoiceStore(s => s.invoices)
   const receipts = useReceiptStore(s => s.receipts)
   const getClient = useClientStore(s => s.getById)
+  const clients = useClientStore(s => s.clients)
 
-  const withTotals = invoices.map(inv => ({
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const [selectedYear, setSelectedYear] = useState(currentYear)
+
+  const withTotals = useMemo(() => invoices.map(inv => ({
     ...inv,
     derivedStatus: getDerivedStatus(inv),
     total: calcTotal(inv.lineItems, inv.taxRate, inv.discountType, inv.discountValue).total,
-  }))
+  })), [invoices])
 
   const paid = withTotals.filter(i => i.status === 'paid')
   const outstanding = withTotals.filter(i => ['sent', 'overdue'].includes(i.derivedStatus))
@@ -36,6 +59,54 @@ export function Dashboard() {
 
   const totalPaid = paid.reduce((s, i) => s + i.total, 0)
   const totalOutstanding = outstanding.reduce((s, i) => s + i.total, 0)
+
+  const totalRevenue = withTotals.reduce((s, i) => s + i.total, 0)
+
+  const currentMonthRevenue = useMemo(() => {
+    const m = now.getMonth(), y = now.getFullYear()
+    return withTotals
+      .filter(i => {
+        const d = new Date(i.issueDate)
+        return d.getFullYear() === y && d.getMonth() === m
+      })
+      .reduce((s, i) => s + i.total, 0)
+  }, [withTotals])
+
+  // Bar chart: monthly revenue for selected year
+  const availableYears = useMemo(() => {
+    const years = new Set(withTotals.map(i => new Date(i.issueDate).getFullYear()))
+    years.add(currentYear)
+    return [...years].sort((a, b) => b - a)
+  }, [withTotals, currentYear])
+
+  const monthlyData = useMemo(() => {
+    return MONTHS_HE.map((label, month) => ({
+      label,
+      value: withTotals
+        .filter(i => {
+          const d = new Date(i.issueDate)
+          return d.getFullYear() === selectedYear && d.getMonth() === month
+        })
+        .reduce((s, i) => s + i.total, 0),
+    }))
+  }, [withTotals, selectedYear])
+
+  // Pie chart: revenue by client
+  const clientRevenue = useMemo(() => {
+    const map = {}
+    for (const inv of withTotals) {
+      if (!map[inv.clientId]) map[inv.clientId] = 0
+      map[inv.clientId] += inv.total
+    }
+    return Object.entries(map)
+      .map(([clientId, value]) => ({
+        name: getClient(clientId)?.name || 'לא ידוע',
+        value,
+      }))
+      .filter(d => d.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8)
+  }, [withTotals, getClient])
 
   const recentInvoices = [...invoices]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -57,10 +128,66 @@ export function Dashboard() {
     >
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="סה״כ חשבוניות" value={invoices.length} />
+        <StatCard label="הכנסות כוללות" value={formatCurrency(totalRevenue)} color="text-indigo-700" sub={`${invoices.length} חשבוניות`} />
+        <StatCard label="הכנסות החודש" value={formatCurrency(currentMonthRevenue)} color="text-purple-700" />
         <StatCard label="שולם" value={formatCurrency(totalPaid)} color="text-green-700" sub={`${paid.length} חשבוניות`} />
         <StatCard label="ממתין לתשלום" value={formatCurrency(totalOutstanding)} color="text-blue-700" sub={`${outstanding.length} חשבוניות`} />
-        <StatCard label="באיחור" value={overdue.length} color={overdue.length > 0 ? 'text-red-600' : 'text-gray-900'} />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Bar chart */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <select
+              value={selectedYear}
+              onChange={e => setSelectedYear(Number(e.target.value))}
+              className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <h2 className="text-base font-semibold text-gray-800">הכנסות חודשיות</h2>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={monthlyData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+              <YAxis hide />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
+              <Bar dataKey="value" fill="#1e3a5f" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Pie chart */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 className="text-base font-semibold text-gray-800 mb-4 text-end">הכנסות לפי לקוח</h2>
+          {clientRevenue.length === 0 ? (
+            <p className="text-gray-400 text-sm text-center py-8">אין נתונים</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={clientRevenue}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={70}
+                  innerRadius={32}
+                >
+                  {clientRevenue.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v) => formatCurrency(v)} />
+                <Legend
+                  formatter={(value) => <span style={{ fontSize: 11, color: '#374151' }}>{value}</span>}
+                  iconSize={10}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </div>
 
       {/* Recent invoices */}
