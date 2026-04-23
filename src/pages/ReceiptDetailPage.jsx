@@ -9,8 +9,9 @@ import { PageWrapper } from '../components/layout/PageWrapper'
 import { Button } from '../components/ui/Button'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { SendEmailModal } from '../components/ui/SendEmailModal'
+import { SendWhatsAppModal } from '../components/ui/SendWhatsAppModal'
 import { formatCurrency, formatDate } from '../utils/formatters'
-import { buildReceiptEmail } from '../utils/emailHtml'
+import { buildReceiptEmail, buildReceiptWhatsApp } from '../utils/emailHtml'
 import { calcReceiptTotal, calcTotal } from '../utils/calculations'
 import { PAYMENT_METHODS } from '../constants'
 import { v4 as uuidv4 } from 'uuid'
@@ -55,6 +56,9 @@ export function ReceiptDetailPage() {
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailOpen, setEmailOpen]   = useState(false)
   const [emailPdfBlob, setEmailPdfBlob] = useState(null)
+  const [waLoading, setWaLoading] = useState(false)
+  const [waOpen, setWaOpen] = useState(false)
+  const [waPdfBlob, setWaPdfBlob] = useState(null)
 
   if (!isNew && loading && !navReceipt) {
     return <PageWrapper title="טוען..."><div className="text-gray-400 text-sm">טוען קבלה...</div></PageWrapper>
@@ -133,6 +137,28 @@ export function ReceiptDetailPage() {
     }
   }
 
+  const handleOpenWhatsAppModal = async () => {
+    const client = getClient(receipt.clientId)
+    setWaLoading(true)
+    try {
+      const [{ pdf }, { ReceiptPDF }, { registerHebrewFont }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('../utils/pdf/receiptPDF'),
+        import('../utils/pdf/hebrewFont'),
+      ])
+      await registerHebrewFont()
+      const blob = await pdf(<ReceiptPDF receipt={receipt} client={client} settings={settings} />).toBlob()
+      setWaPdfBlob(blob)
+      setWaOpen(true)
+    } catch (err) {
+      console.error('PDF generation for WhatsApp failed:', err)
+      setWaPdfBlob(null)
+      setWaOpen(true)
+    } finally {
+      setWaLoading(false)
+    }
+  }
+
   if (isNew || isEditing) {
     return (
       <PageWrapper title={isNew ? 'קבלה חדשה' : `עריכת ${receipt.number}`}>
@@ -159,6 +185,9 @@ export function ReceiptDetailPage() {
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" disabled={emailLoading} onClick={handleOpenEmailModal}>
             {emailLoading ? 'מייצר...' : '📧 שלח באימייל'}
+          </Button>
+          <Button variant="secondary" size="sm" disabled={waLoading} onClick={handleOpenWhatsAppModal}>
+            {waLoading ? 'מייצר...' : '💬 וואטסאפ'}
           </Button>
           <Button variant="secondary" size="sm" onClick={() => window.print()}>הדפס</Button>
           <Button variant="secondary" size="sm" disabled={pdfLoading} onClick={handleDownloadPDF}>
@@ -266,6 +295,14 @@ export function ReceiptDetailPage() {
         onClose={() => { setEmailOpen(false); setEmailPdfBlob(null) }}
         emailData={receipt && buildReceiptEmail(receipt, getClient(receipt.clientId), settings)}
         pdfBlob={emailPdfBlob}
+        pdfFilename={receipt ? `${receipt.number}.pdf` : undefined}
+      />
+
+      <SendWhatsAppModal
+        isOpen={waOpen}
+        onClose={() => { setWaOpen(false); setWaPdfBlob(null) }}
+        whatsappData={receipt && buildReceiptWhatsApp(receipt, getClient(receipt.clientId), settings, total)}
+        pdfBlob={waPdfBlob}
         pdfFilename={receipt ? `${receipt.number}.pdf` : undefined}
       />
     </PageWrapper>

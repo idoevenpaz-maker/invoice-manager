@@ -10,11 +10,12 @@ import { Badge } from '../components/ui/Badge'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { InvoiceTotals } from '../components/invoice/InvoiceTotals'
 import { SendEmailModal } from '../components/ui/SendEmailModal'
+import { SendWhatsAppModal } from '../components/ui/SendWhatsAppModal'
 import { formatCurrency, formatDate, getDerivedStatus } from '../utils/formatters'
 import { useReceiptStore } from '../store/useReceiptStore'
 import { calcTotal } from '../utils/calculations'
 import { PAYMENT_METHODS } from '../constants'
-import { buildInvoiceEmail } from '../utils/emailHtml'
+import { buildInvoiceEmail, buildInvoiceWhatsApp } from '../utils/emailHtml'
 
 export function InvoiceDetailPage() {
   const { id } = useParams()
@@ -39,6 +40,9 @@ export function InvoiceDetailPage() {
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailOpen, setEmailOpen]   = useState(false)
   const [emailPdfBlob, setEmailPdfBlob] = useState(null)
+  const [waLoading, setWaLoading] = useState(false)
+  const [waOpen, setWaOpen] = useState(false)
+  const [waPdfBlob, setWaPdfBlob] = useState(null)
 
   if (!isNew && loading && !navInvoice) {
     return <PageWrapper title="טוען..."><div className="text-gray-400 text-sm">טוען חשבונית...</div></PageWrapper>
@@ -113,6 +117,28 @@ export function InvoiceDetailPage() {
     }
   }
 
+  const handleOpenWhatsAppModal = async () => {
+    const client = getClient(invoice.clientId)
+    setWaLoading(true)
+    try {
+      const [{ pdf }, { InvoicePDF }, { registerHebrewFont }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('../utils/pdf/invoicePDF'),
+        import('../utils/pdf/hebrewFont'),
+      ])
+      await registerHebrewFont()
+      const blob = await pdf(<InvoicePDF invoice={invoice} client={client} settings={settings} />).toBlob()
+      setWaPdfBlob(blob)
+      setWaOpen(true)
+    } catch (err) {
+      console.error('PDF generation for WhatsApp failed:', err)
+      setWaPdfBlob(null)
+      setWaOpen(true)
+    } finally {
+      setWaLoading(false)
+    }
+  }
+
   const handleConvertToReceipt = () => {
     if (invoice) {
       navigate(`/receipts/new?fromInvoice=${invoice.id}`)
@@ -154,6 +180,9 @@ export function InvoiceDetailPage() {
           )}
           <Button variant="secondary" size="sm" disabled={emailLoading} onClick={handleOpenEmailModal}>
             {emailLoading ? 'מייצר...' : '📧 שלח באימייל'}
+          </Button>
+          <Button variant="secondary" size="sm" disabled={waLoading} onClick={handleOpenWhatsAppModal}>
+            {waLoading ? 'מייצר...' : '💬 וואטסאפ'}
           </Button>
           <Button variant="secondary" size="sm" onClick={handleConvertToReceipt}>צור קבלה</Button>
           <Button variant="secondary" size="sm" onClick={() => window.print()}>הדפס</Button>
@@ -283,6 +312,14 @@ export function InvoiceDetailPage() {
         onClose={() => { setEmailOpen(false); setEmailPdfBlob(null) }}
         emailData={invoice && buildInvoiceEmail(invoice, getClient(invoice.clientId), settings)}
         pdfBlob={emailPdfBlob}
+        pdfFilename={invoice ? `${invoice.number}.pdf` : undefined}
+      />
+
+      <SendWhatsAppModal
+        isOpen={waOpen}
+        onClose={() => { setWaOpen(false); setWaPdfBlob(null) }}
+        whatsappData={invoice && buildInvoiceWhatsApp(invoice, getClient(invoice.clientId), settings, total)}
+        pdfBlob={waPdfBlob}
         pdfFilename={invoice ? `${invoice.number}.pdf` : undefined}
       />
     </PageWrapper>

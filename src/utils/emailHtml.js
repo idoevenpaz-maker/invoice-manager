@@ -1,3 +1,4 @@
+import { formatCurrency } from './formatters'
 
 function buildSimpleHtml(businessName) {
   return `<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="UTF-8"></head>
@@ -24,4 +25,20 @@ export function buildReceiptEmail(receipt, client, settings) {
     toEmail:  client?.email || '',
     toName:   client?.name  || '',
   }
+}
+
+export function buildInvoiceWhatsApp(invoice, client, settings, total) {
+  const biz = settings.businessName || 'העסק'
+  const greeting = client?.name ? `שלום ${client.name},\n\n` : ''
+  const totalLine = total != null ? `\nסכום לתשלום: ${formatCurrency(total, invoice.currency)}` : ''
+  const message = `${greeting}מצורפת חשבונית ${invoice.number} מאת ${biz}.${totalLine}\n\nתודה!`
+  return { phone: client?.phone || '', message }
+}
+
+export function buildReceiptWhatsApp(receipt, client, settings, total) {
+  const biz = settings.businessName || 'העסק'
+  const greeting = client?.name ? `שלום ${client.name},\n\n` : ''
+  const totalLine = total != null ? `\nסכום ששולם: ${formatCurrency(total, receipt.currency)}` : ''
+  const message = `${greeting}מצורפת קבלה ${receipt.number} מאת ${biz}.${totalLine}\n\nתודה!`
+  return { phone: client?.phone || '', message }
 }
