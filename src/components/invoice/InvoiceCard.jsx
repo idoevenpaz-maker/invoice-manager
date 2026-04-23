@@ -17,22 +17,22 @@ export function InvoiceCard({ invoice, onDelete }) {
       className="bg-white rounded-xl border border-gray-200 p-4 cursor-pointer hover:shadow-md hover:border-brand-500 transition-all"
     >
       <div className="flex items-start justify-between mb-3">
-        <Badge status={derivedStatus} />
         <span className="text-sm font-semibold text-gray-800">{invoice.number}</span>
+        <Badge status={derivedStatus} />
       </div>
 
-      <div className="text-base font-bold text-gray-900 mb-1 text-end">
+      <div className="text-base font-bold text-gray-900 mb-1 text-start">
         {client ? client.name : <span className="text-gray-400 text-sm">ללא לקוח</span>}
       </div>
       {client?.company && (
-        <div className="text-sm text-gray-500 mb-2 text-end">{client.company}</div>
+        <div className="text-sm text-gray-500 mb-2 text-start">{client.company}</div>
       )}
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-        <div className="text-xs text-gray-400">{formatDate(invoice.issueDate)}</div>
         <div className="text-lg font-bold font-mono text-brand-500">
           {formatCurrency(total, invoice.currency)}
         </div>
+        <div className="text-xs text-gray-400">{formatDate(invoice.issueDate)}</div>
       </div>
     </div>
   )
