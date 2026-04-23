@@ -139,6 +139,7 @@ export function Dashboard() {
         {/* Bar chart */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-800">הכנסות חודשיות</h2>
             <select
               value={selectedYear}
               onChange={e => setSelectedYear(Number(e.target.value))}
@@ -146,7 +147,6 @@ export function Dashboard() {
             >
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
-            <h2 className="text-base font-semibold text-gray-800">הכנסות חודשיות</h2>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={monthlyData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
@@ -160,7 +160,7 @@ export function Dashboard() {
 
         {/* Pie chart */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-base font-semibold text-gray-800 mb-4 text-end">הכנסות לפי לקוח</h2>
+          <h2 className="text-base font-semibold text-gray-800 mb-4 text-start">הכנסות לפי לקוח</h2>
           {clientRevenue.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-8">אין נתונים</p>
           ) : (
@@ -193,8 +193,8 @@ export function Dashboard() {
       {/* Recent invoices */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/invoices')}>כל החשבוניות</Button>
           <h2 className="text-lg font-semibold text-gray-800">חשבוניות אחרונות</h2>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/invoices')}>כל החשבוניות</Button>
         </div>
         {recentInvoices.length === 0 ? (
           <p className="text-gray-400 text-sm text-center py-8">אין חשבוניות עדיין</p>
@@ -203,11 +203,11 @@ export function Dashboard() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-gray-500">מספר</th>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-gray-500">לקוח</th>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-gray-500">תאריך</th>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-gray-500">סטטוס</th>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-gray-500">סכום</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500">מספר</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500">לקוח</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500">תאריך</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500">סטטוס</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500">סכום</th>
                 </tr>
               </thead>
               <tbody>
@@ -220,11 +220,11 @@ export function Dashboard() {
                       onClick={() => navigate(`/invoices/${inv.id}`)}
                       className={`cursor-pointer hover:bg-gray-50 ${i < recentInvoices.length - 1 ? 'border-b border-gray-100' : ''}`}
                     >
-                      <td className="px-4 py-3 font-medium text-end">{inv.number}</td>
-                      <td className="px-4 py-3 text-gray-600 text-end">{client?.name || '—'}</td>
-                      <td className="px-4 py-3 text-gray-500 text-end">{formatDate(inv.issueDate)}</td>
-                      <td className="px-4 py-3 text-end"><Badge status={getDerivedStatus(inv)} /></td>
-                      <td className="px-4 py-3 font-mono font-semibold text-end">{formatCurrency(total, inv.currency)}</td>
+                      <td className="px-4 py-3 font-medium text-start">{inv.number}</td>
+                      <td className="px-4 py-3 text-gray-600 text-start">{client?.name || '—'}</td>
+                      <td className="px-4 py-3 text-gray-500 text-start">{formatDate(inv.issueDate)}</td>
+                      <td className="px-4 py-3 text-start"><Badge status={getDerivedStatus(inv)} /></td>
+                      <td className="px-4 py-3 font-mono font-semibold text-start">{formatCurrency(total, inv.currency)}</td>
                     </tr>
                   )
                 })}
@@ -237,8 +237,8 @@ export function Dashboard() {
       {/* Recent receipts */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/receipts')}>כל הקבלות</Button>
           <h2 className="text-lg font-semibold text-gray-800">קבלות אחרונות</h2>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/receipts')}>כל הקבלות</Button>
         </div>
         {recentReceipts.length === 0 ? (
           <p className="text-gray-400 text-sm text-center py-8">אין קבלות עדיין</p>
@@ -247,10 +247,10 @@ export function Dashboard() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-gray-500">מספר</th>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-gray-500">לקוח</th>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-gray-500">תאריך</th>
-                  <th className="px-4 py-3 text-end text-xs font-medium text-gray-500">סכום</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500">מספר</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500">לקוח</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500">תאריך</th>
+                  <th className="px-4 py-3 text-start text-xs font-medium text-gray-500">סכום</th>
                 </tr>
               </thead>
               <tbody>
@@ -263,10 +263,10 @@ export function Dashboard() {
                       onClick={() => navigate(`/receipts/${r.id}`)}
                       className={`cursor-pointer hover:bg-gray-50 ${i < recentReceipts.length - 1 ? 'border-b border-gray-100' : ''}`}
                     >
-                      <td className="px-4 py-3 font-medium text-end">{r.number}</td>
-                      <td className="px-4 py-3 text-gray-600 text-end">{client?.name || '—'}</td>
-                      <td className="px-4 py-3 text-gray-500 text-end">{formatDate(r.date)}</td>
-                      <td className="px-4 py-3 font-mono font-semibold text-end">{formatCurrency(total, r.currency)}</td>
+                      <td className="px-4 py-3 font-medium text-start">{r.number}</td>
+                      <td className="px-4 py-3 text-gray-600 text-start">{client?.name || '—'}</td>
+                      <td className="px-4 py-3 text-gray-500 text-start">{formatDate(r.date)}</td>
+                      <td className="px-4 py-3 font-mono font-semibold text-start">{formatCurrency(total, r.currency)}</td>
                     </tr>
                   )
                 })}
