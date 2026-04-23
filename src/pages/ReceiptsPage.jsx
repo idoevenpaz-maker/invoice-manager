@@ -12,6 +12,7 @@ import { exportReceiptsToCsv } from '../utils/exportCsv'
 export function ReceiptsPage() {
   const navigate  = useNavigate()
   const receipts  = useReceiptStore(s => s.receipts)
+  const deleteReceipt = useReceiptStore(s => s.deleteReceipt)
   const clients   = useClientStore(s => s.clients)
   const getClient = useClientStore(s => s.getById)
 
@@ -49,7 +50,7 @@ export function ReceiptsPage() {
         />
       </div>
 
-      <ReceiptList receipts={filtered} />
+      <ReceiptList receipts={filtered} onDelete={deleteReceipt} />
 
       <ExportModal
         isOpen={exportOpen}

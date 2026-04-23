@@ -14,6 +14,7 @@ import { exportInvoicesToCsv } from '../utils/exportCsv'
 export function InvoicesPage() {
   const navigate = useNavigate()
   const invoices = useInvoiceStore(s => s.invoices)
+  const deleteInvoice = useInvoiceStore(s => s.deleteInvoice)
   const clients  = useClientStore(s => s.clients)
   const getClient = useClientStore(s => s.getById)
 
@@ -64,7 +65,7 @@ export function InvoicesPage() {
         </Select>
       </div>
 
-      <InvoiceList invoices={filtered} />
+      <InvoiceList invoices={filtered} onDelete={deleteInvoice} />
 
       <ExportModal
         isOpen={exportOpen}
