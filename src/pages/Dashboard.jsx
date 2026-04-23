@@ -47,56 +47,59 @@ export function Dashboard() {
   const currentYear = now.getFullYear()
   const [selectedYear, setSelectedYear] = useState(currentYear)
 
+  // Invoice-based: used only for ממתין לתשלום
   const withTotals = useMemo(() => invoices.map(inv => ({
     ...inv,
     derivedStatus: getDerivedStatus(inv),
     total: calcTotal(inv.lineItems, inv.taxRate, inv.discountType, inv.discountValue).total,
   })), [invoices])
-
-  const paid = withTotals.filter(i => i.status === 'paid')
   const outstanding = withTotals.filter(i => ['sent', 'overdue'].includes(i.derivedStatus))
-  const overdue = withTotals.filter(i => i.derivedStatus === 'overdue')
-
-  const totalPaid = paid.reduce((s, i) => s + i.total, 0)
   const totalOutstanding = outstanding.reduce((s, i) => s + i.total, 0)
 
-  const totalRevenue = withTotals.reduce((s, i) => s + i.total, 0)
+  // Receipt-based: all revenue calculations
+  const receiptWithTotals = useMemo(() => receipts.map(r => ({
+    ...r,
+    total: calcReceiptTotal(r.items),
+  })), [receipts])
+
+  const totalRevenue = receiptWithTotals.reduce((s, r) => s + r.total, 0)
+  const totalPaid = totalRevenue
 
   const currentMonthRevenue = useMemo(() => {
     const m = now.getMonth(), y = now.getFullYear()
-    return withTotals
-      .filter(i => {
-        const d = new Date(i.issueDate)
+    return receiptWithTotals
+      .filter(r => {
+        const d = new Date(r.date)
         return d.getFullYear() === y && d.getMonth() === m
       })
-      .reduce((s, i) => s + i.total, 0)
-  }, [withTotals])
+      .reduce((s, r) => s + r.total, 0)
+  }, [receiptWithTotals])
 
-  // Bar chart: monthly revenue for selected year
+  // Bar chart: monthly receipts for selected year
   const availableYears = useMemo(() => {
-    const years = new Set(withTotals.map(i => new Date(i.issueDate).getFullYear()))
+    const years = new Set(receiptWithTotals.map(r => new Date(r.date).getFullYear()))
     years.add(currentYear)
     return [...years].sort((a, b) => b - a)
-  }, [withTotals, currentYear])
+  }, [receiptWithTotals, currentYear])
 
   const monthlyData = useMemo(() => {
     return MONTHS_HE.map((label, month) => ({
       label,
-      value: withTotals
-        .filter(i => {
-          const d = new Date(i.issueDate)
+      value: receiptWithTotals
+        .filter(r => {
+          const d = new Date(r.date)
           return d.getFullYear() === selectedYear && d.getMonth() === month
         })
-        .reduce((s, i) => s + i.total, 0),
+        .reduce((s, r) => s + r.total, 0),
     }))
-  }, [withTotals, selectedYear])
+  }, [receiptWithTotals, selectedYear])
 
-  // Pie chart: revenue by client
+  // Pie chart: revenue by client from receipts
   const clientRevenue = useMemo(() => {
     const map = {}
-    for (const inv of withTotals) {
-      if (!map[inv.clientId]) map[inv.clientId] = 0
-      map[inv.clientId] += inv.total
+    for (const r of receiptWithTotals) {
+      if (!map[r.clientId]) map[r.clientId] = 0
+      map[r.clientId] += r.total
     }
     return Object.entries(map)
       .map(([clientId, value]) => ({
@@ -106,7 +109,7 @@ export function Dashboard() {
       .filter(d => d.value > 0)
       .sort((a, b) => b.value - a.value)
       .slice(0, 8)
-  }, [withTotals, getClient])
+  }, [receiptWithTotals, getClient])
 
   const recentInvoices = [...invoices]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -128,9 +131,9 @@ export function Dashboard() {
     >
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="הכנסות כוללות" value={formatCurrency(totalRevenue)} color="text-indigo-700" sub={`${invoices.length} חשבוניות`} />
+        <StatCard label="הכנסות כוללות" value={formatCurrency(totalRevenue)} color="text-indigo-700" sub={`${receipts.length} קבלות`} />
         <StatCard label="הכנסות החודש" value={formatCurrency(currentMonthRevenue)} color="text-purple-700" />
-        <StatCard label="שולם" value={formatCurrency(totalPaid)} color="text-green-700" sub={`${paid.length} חשבוניות`} />
+        <StatCard label="שולם" value={formatCurrency(totalPaid)} color="text-green-700" sub={`${receipts.length} קבלות`} />
         <StatCard label="ממתין לתשלום" value={formatCurrency(totalOutstanding)} color="text-blue-700" sub={`${outstanding.length} חשבוניות`} />
       </div>
 
