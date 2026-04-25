@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Rounded navy background -->
+  <rect width="32" height="32" rx="7" fill="#1e3a5f"/>
+
+  <!-- White document body -->
+  <rect x="6" y="4" width="16" height="22" rx="2" fill="#ffffff"/>
+
+  <!-- Folded top-left corner (RTL document feel) -->
+  <path d="M6 4 L10 4 L6 8 Z" fill="#e2e8f0"/>
+  <path d="M6 8 L10 4" stroke="#cbd5e1" stroke-width="0.5"/>
+
+  <!-- Invoice lines -->
+  <rect x="9"  y="11" width="10" height="1.5" rx="0.75" fill="#1e3a5f" opacity="0.25"/>
+  <rect x="9"  y="14" width="8"  height="1.5" rx="0.75" fill="#1e3a5f" opacity="0.25"/>
+  <rect x="9"  y="17" width="10" height="1.5" rx="0.75" fill="#1e3a5f" opacity="0.25"/>
+
+  <!-- Bottom total line (accent) -->
+  <rect x="9" y="21" width="10" height="1.5" rx="0.75" fill="#1e3a5f" opacity="0.6"/>
+
+  <!-- ₪ symbol below the document -->
+  <text
+    x="22" y="30"
+    font-size="9"
+    font-family="Arial, sans-serif"
+    font-weight="bold"
+    fill="#ffffff"
+    text-anchor="middle"
+  >₪</text>
+</svg>
