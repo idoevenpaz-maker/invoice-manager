@@ -40,8 +40,8 @@ const s = StyleSheet.create({
   tableRowAlt:   { backgroundColor: C.gray50 },
   colDesc:       { flex: 3, textAlign: 'right' },
   colQty:        { flex: 1, textAlign: 'center' },
-  colPrice:      { flex: 1.5, textAlign: 'left' },
-  colTotal:      { flex: 1.5, textAlign: 'left' },
+  colPrice:      { flex: 1.5, textAlign: 'right' },
+  colTotal:      { flex: 1.5, textAlign: 'right' },
   thText:        { color: C.white, fontSize: 9, fontWeight: 700 },
   tdText:        { fontSize: 9, color: C.gray700 },
   totalsSection: { marginTop: 12, alignItems: 'flex-end' },
@@ -50,11 +50,11 @@ const s = StyleSheet.create({
   totalsValue:   { fontSize: 9, color: C.gray900, fontWeight: 700 },
   totalFinal:    { flexDirection: 'row-reverse', justifyContent: 'space-between', width: 200, borderTopWidth: 1.5, borderTopColor: C.navy, paddingTop: 6, marginTop: 4 },
   totalFinalTxt: { fontSize: 11, fontWeight: 700, color: C.navy },
-  paymentSection:{ marginTop: 24, padding: 12, backgroundColor: C.gray50, borderRadius: 4 },
-  sectionTitle:  { fontSize: 9, fontWeight: 700, color: C.navy, marginBottom: 6 },
-  paymentText:   { fontSize: 9, color: C.gray700, lineHeight: 1.6 },
-  notesSection:  { marginTop: 16 },
-  notesText:     { fontSize: 9, color: C.gray500, lineHeight: 1.6 },
+  paymentSection:{ marginTop: 24, padding: 12, backgroundColor: C.gray50, borderRadius: 4, alignItems: 'flex-end' },
+  sectionTitle:  { fontSize: 9, fontWeight: 700, color: C.navy, marginBottom: 6, textAlign: 'right' },
+  paymentText:   { fontSize: 9, color: C.gray700, lineHeight: 1.6, textAlign: 'right' },
+  notesSection:  { marginTop: 16, alignItems: 'flex-end' },
+  notesText:     { fontSize: 9, color: C.gray500, lineHeight: 1.6, textAlign: 'right' },
   footer:        { position: 'absolute', bottom: 24, left: 40, right: 40, borderTopWidth: 1, borderTopColor: C.gray300, paddingTop: 8 },
   footerText:    { fontSize: 8, color: C.gray500, textAlign: 'center' },
 })
@@ -66,24 +66,24 @@ function TotalsBlock({ lineItems, taxRate, discountType, discountValue, currency
   return (
     <View style={s.totalsSection}>
       <View style={s.totalsRow}>
-        <View><Text style={s.totalsValue}>{fmt(subtotal)}</Text></View>
         <View><Text style={s.totalsLabel}>סכום לפני מע"מ</Text></View>
+        <View><Text style={s.totalsValue}>{fmt(subtotal)}</Text></View>
       </View>
       {discountAmount > 0 && (
         <View style={s.totalsRow}>
-          <View><Text style={s.totalsValue}>-{fmt(discountAmount)}</Text></View>
           <View><Text style={s.totalsLabel}>הנחה</Text></View>
+          <View><Text style={s.totalsValue}>-{fmt(discountAmount)}</Text></View>
         </View>
       )}
       {taxRate > 0 && (
         <View style={s.totalsRow}>
-          <View><Text style={s.totalsValue}>{fmt(taxAmount)}</Text></View>
           <View><Text style={s.totalsLabel}>מע"מ ({taxRate}%)</Text></View>
+          <View><Text style={s.totalsValue}>{fmt(taxAmount)}</Text></View>
         </View>
       )}
       <View style={s.totalFinal}>
-        <View><Text style={s.totalFinalTxt}>{fmt(total)}</Text></View>
         <View><Text style={s.totalFinalTxt}>סה"כ לתשלום</Text></View>
+        <View><Text style={s.totalFinalTxt}>{fmt(total)}</Text></View>
       </View>
     </View>
   )
@@ -98,9 +98,6 @@ export function InvoicePDF({ invoice, client, settings }) {
       <Page size="A4" style={s.page}>
         {/* Header */}
         <View style={s.header}>
-          {settings.logo
-            ? <Image style={s.logo} src={settings.logo} />
-            : <View style={{ width: 80 }} />}
           <View style={s.businessBlock}>
             <Text style={s.businessName}>{settings.businessName || 'שם העסק'}</Text>
             {settings.taxId && <Text style={s.businessSub}>מס' עוסק: {settings.taxId}</Text>}
@@ -108,26 +105,21 @@ export function InvoicePDF({ invoice, client, settings }) {
             {settings.email && <Text style={s.businessSub}>{settings.email}</Text>}
             {settings.address?.line1 && <Text style={s.businessSub}>{settings.address.line1}</Text>}
           </View>
+          {settings.logo
+            ? <Image style={s.logo} src={settings.logo} />
+            : <View style={{ width: 80 }} />}
         </View>
 
         <View style={s.divider} />
 
         {/* Title row */}
         <View style={s.titleRow}>
-          <Text style={s.docNumber}>{invoice.number} | {statusLabel}</Text>
           <Text style={s.docTitle}>חשבונית</Text>
+          <Text style={s.docNumber}>{invoice.number} | {statusLabel}</Text>
         </View>
 
         {/* Meta: client + dates */}
         <View style={s.metaRow}>
-          <View style={s.metaBlock}>
-            <Text style={s.metaLabel}>תאריך הנפקה</Text>
-            <Text style={s.metaValue}>{formatDate(invoice.issueDate)}</Text>
-            {invoice.dueDate && <>
-              <Text style={[s.metaLabel, { marginTop: 6 }]}>תאריך פירעון</Text>
-              <Text style={s.metaValue}>{formatDate(invoice.dueDate)}</Text>
-            </>}
-          </View>
           {client && (
             <View style={s.metaBlock}>
               <Text style={s.metaLabel}>לכבוד</Text>
@@ -137,6 +129,14 @@ export function InvoicePDF({ invoice, client, settings }) {
               {client.address?.line1 && <Text style={s.metaValue}>{client.address.line1}</Text>}
             </View>
           )}
+          <View style={s.metaBlock}>
+            <Text style={s.metaLabel}>תאריך הנפקה</Text>
+            <Text style={s.metaValue}>{formatDate(invoice.issueDate)}</Text>
+            {invoice.dueDate && <>
+              <Text style={[s.metaLabel, { marginTop: 6 }]}>תאריך פירעון</Text>
+              <Text style={s.metaValue}>{formatDate(invoice.dueDate)}</Text>
+            </>}
+          </View>
         </View>
 
         {/* Line items table */}

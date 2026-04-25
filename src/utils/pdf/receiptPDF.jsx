@@ -36,14 +36,14 @@ const s = StyleSheet.create({
   tableRow:     { flexDirection: 'row-reverse', padding: '5 8', borderBottomWidth: 1, borderBottomColor: C.gray100 },
   tableRowAlt:  { backgroundColor: C.gray50 },
   colDesc:      { flex: 4, textAlign: 'right' },
-  colAmount:    { flex: 1.5, textAlign: 'left' },
+  colAmount:    { flex: 1.5, textAlign: 'right' },
   thText:       { color: C.white, fontSize: 9, fontWeight: 700 },
   tdText:       { fontSize: 9, color: C.gray700 },
   totalRow:     { flexDirection: 'row-reverse', justifyContent: 'space-between', width: 200, borderTopWidth: 1.5, borderTopColor: C.navy, paddingTop: 6, marginTop: 8 },
   totalText:    { fontSize: 11, fontWeight: 700, color: C.navy },
-  paymentBox:   { marginTop: 20, padding: 12, backgroundColor: C.gray50, borderRadius: 4 },
-  sectionTitle: { fontSize: 9, fontWeight: 700, color: C.navy, marginBottom: 6 },
-  paymentText:  { fontSize: 9, color: C.gray700, lineHeight: 1.6 },
+  paymentBox:   { marginTop: 20, padding: 12, backgroundColor: C.gray50, borderRadius: 4, alignItems: 'flex-end' },
+  sectionTitle: { fontSize: 9, fontWeight: 700, color: C.navy, marginBottom: 6, textAlign: 'right' },
+  paymentText:  { fontSize: 9, color: C.gray700, lineHeight: 1.6, textAlign: 'right' },
   thankYou:     { marginTop: 28, textAlign: 'center', fontSize: 11, color: C.navy, fontWeight: 700 },
   footer:       { position: 'absolute', bottom: 24, left: 40, right: 40, borderTopWidth: 1, borderTopColor: C.gray300, paddingTop: 8 },
   footerText:   { fontSize: 8, color: C.gray500, textAlign: 'center' },
@@ -59,9 +59,6 @@ export function ReceiptPDF({ receipt, client, settings }) {
       <Page size="A4" style={s.page}>
         {/* Header */}
         <View style={s.header}>
-          {settings.logo
-            ? <Image style={s.logo} src={settings.logo} />
-            : <View style={{ width: 80 }} />}
           <View style={s.businessBlock}>
             <Text style={s.businessName}>{settings.businessName || 'שם העסק'}</Text>
             {settings.taxId && <Text style={s.businessSub}>מס' עוסק: {settings.taxId}</Text>}
@@ -69,22 +66,21 @@ export function ReceiptPDF({ receipt, client, settings }) {
             {settings.email && <Text style={s.businessSub}>{settings.email}</Text>}
             {settings.address?.line1 && <Text style={s.businessSub}>{settings.address.line1}</Text>}
           </View>
+          {settings.logo
+            ? <Image style={s.logo} src={settings.logo} />
+            : <View style={{ width: 80 }} />}
         </View>
 
         <View style={s.divider} />
 
         {/* Title */}
         <View style={s.titleRow}>
-          <Text style={s.docNumber}>{receipt.number}</Text>
           <Text style={s.docTitle}>קבלה</Text>
+          <Text style={s.docNumber}>{receipt.number}</Text>
         </View>
 
         {/* Meta */}
         <View style={s.metaRow}>
-          <View style={s.metaBlock}>
-            <Text style={s.metaLabel}>תאריך</Text>
-            <Text style={s.metaValue}>{formatDate(receipt.date)}</Text>
-          </View>
           {client && (
             <View style={s.metaBlock}>
               <Text style={s.metaLabel}>התקבל מ</Text>
@@ -92,6 +88,10 @@ export function ReceiptPDF({ receipt, client, settings }) {
               {client.company && <Text style={s.metaValue}>{client.company}</Text>}
             </View>
           )}
+          <View style={s.metaBlock}>
+            <Text style={s.metaLabel}>תאריך</Text>
+            <Text style={s.metaValue}>{formatDate(receipt.date)}</Text>
+          </View>
         </View>
 
         {/* Items table */}
@@ -109,8 +109,8 @@ export function ReceiptPDF({ receipt, client, settings }) {
         {/* Total */}
         <View style={{ alignItems: 'flex-end' }}>
           <View style={s.totalRow}>
-            <Text style={s.totalText}>{fmt(total)}</Text>
             <Text style={s.totalText}>סה"כ</Text>
+            <Text style={s.totalText}>{fmt(total)}</Text>
           </View>
         </View>
 
