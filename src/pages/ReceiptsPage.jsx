@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReceiptStore } from '../store/useReceiptStore'
 import { useClientStore } from '../store/useClientStore'
+import { useSettingsStore } from '../store/useSettingsStore'
 import { PageWrapper } from '../components/layout/PageWrapper'
 import { ReceiptList } from '../components/receipt/ReceiptList'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { ExportModal } from '../components/ui/ExportModal'
+import { BulkEmailModal } from '../components/ui/BulkEmailModal'
 import { exportReceiptsToCsv } from '../utils/exportCsv'
+import { buildReceiptEmail } from '../utils/emailHtml'
 
 export function ReceiptsPage() {
   const navigate = useNavigate()
@@ -16,11 +19,14 @@ export function ReceiptsPage() {
   const deleteReceipt = useReceiptStore(s => s.deleteReceipt)
   const clients = useClientStore(s => s.clients)
   const getClient = useClientStore(s => s.getById)
+  const settings = useSettingsStore()
 
   const [search, setSearch] = useState('')
   const [exportOpen, setExportOpen] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [bulkEmailOpen, setBulkEmailOpen] = useState(false)
+  const [bulkEmailJobs, setBulkEmailJobs] = useState([])
 
   const filtered = receipts
     .filter(r => {
@@ -51,15 +57,48 @@ export function ReceiptsPage() {
     setConfirmDelete(false)
   }
 
+  const openBulkEmail = () => {
+    const jobs = Array.from(selected).map(id => {
+      const r = receipts.find(x => x.id === id)
+      const client = getClient(r.clientId)
+      const emailData = buildReceiptEmail(r, client, settings)
+      return {
+        number: r.number,
+        toEmail: emailData.toEmail,
+        toName: emailData.toName,
+        subject: emailData.subject,
+        html: emailData.html,
+        pdfFilename: `${r.number}.pdf`,
+        generatePdf: async () => {
+          const [{ pdf }, { ReceiptPDF }, { registerHebrewFont }] = await Promise.all([
+            import('@react-pdf/renderer'),
+            import('../utils/pdf/receiptPDF'),
+            import('../utils/pdf/hebrewFont'),
+          ])
+          await registerHebrewFont()
+          const { createElement } = await import('react')
+          return pdf(createElement(ReceiptPDF, { receipt: r, client, settings })).toBlob()
+        },
+      }
+    })
+    setBulkEmailJobs(jobs)
+    setBulkEmailOpen(true)
+  }
+
   return (
     <PageWrapper
       title="קבלות"
       actions={
         <>
           {selected.size > 0 && (
-            <Button variant="danger" onClick={() => setConfirmDelete(true)}>
-              מחק נבחרים ({selected.size})
-            </Button>
+            <>
+              <Button variant="secondary" onClick={openBulkEmail}>
+                📧 שלח באימייל ({selected.size})
+              </Button>
+              <Button variant="danger" onClick={() => setConfirmDelete(true)}>
+                מחק נבחרים ({selected.size})
+              </Button>
+            </>
           )}
           <Button variant="secondary" onClick={() => setExportOpen(true)}>📊 ייצוא ל-Sheets</Button>
           <Button onClick={() => navigate('/receipts/new')}>+ קבלה חדשה</Button>
@@ -88,6 +127,12 @@ export function ReceiptsPage() {
         onConfirm={deleteSelected}
         title="מחיקת קבלות"
         message={`האם למחוק ${selected.size} קבלות? פעולה זו אינה ניתנת לביטול.`}
+      />
+
+      <BulkEmailModal
+        isOpen={bulkEmailOpen}
+        onClose={() => setBulkEmailOpen(false)}
+        jobs={bulkEmailJobs}
       />
 
       <ExportModal
