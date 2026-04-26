@@ -4,6 +4,8 @@ import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { Textarea } from '../ui/Textarea'
 import { Button } from '../ui/Button'
+import { Modal } from '../ui/Modal'
+import { ClientForm } from '../client/ClientForm'
 import { LineItemsTable } from './LineItemsTable'
 import { InvoiceTotals } from './InvoiceTotals'
 import { useClientStore } from '../../store/useClientStore'
@@ -19,7 +21,9 @@ const STATUSES = [
 
 export function InvoiceForm({ initial, onSave, onCancel }) {
   const clients = useClientStore(s => s.clients)
+  const addClient = useClientStore(s => s.addClient)
   const settings = useSettingsStore()
+  const [newClientOpen, setNewClientOpen] = useState(false)
 
   const [form, setForm] = useState(() => ({
     clientId: '',
@@ -45,16 +49,23 @@ export function InvoiceForm({ initial, onSave, onCancel }) {
     <div className="space-y-6">
       {/* Top row: client + status + dates */}
       <div className="grid grid-cols-2 gap-4">
-        <Select
-          label="לקוח"
-          value={form.clientId || ''}
-          onChange={e => set({ clientId: e.target.value || null })}
-        >
-          <option value="">בחר לקוח...</option>
-          {clients.map(c => (
-            <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
-          ))}
-        </Select>
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Select
+              label="לקוח"
+              value={form.clientId || ''}
+              onChange={e => set({ clientId: e.target.value || null })}
+            >
+              <option value="">בחר לקוח...</option>
+              {clients.map(c => (
+                <option key={c.id} value={c.id}>{c.name}{c.company ? ` — ${c.company}` : ''}</option>
+              ))}
+            </Select>
+          </div>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setNewClientOpen(true)}>
+            + לקוח חדש
+          </Button>
+        </div>
 
         <Select
           label="סטטוס"
@@ -147,6 +158,18 @@ export function InvoiceForm({ initial, onSave, onCancel }) {
         <Button variant="secondary" onClick={onCancel}>ביטול</Button>
         <Button onClick={handleSave}>שמור חשבונית</Button>
       </div>
+
+      <Modal isOpen={newClientOpen} onClose={() => setNewClientOpen(false)} title="לקוח חדש" size="lg">
+        <ClientForm
+          initial={{}}
+          onSave={(data) => {
+            const client = addClient(data)
+            if (client) set({ clientId: client.id })
+            setNewClientOpen(false)
+          }}
+          onCancel={() => setNewClientOpen(false)}
+        />
+      </Modal>
     </div>
   )
 }
