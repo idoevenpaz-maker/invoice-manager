@@ -19,6 +19,7 @@ const defaultSettings = {
   paymentInfo: '',
   invoiceFooter: '',
   dateFormat: 'dd/MM/yyyy',
+  showDigitalSignature: false,
 }
 
 export const useSettingsStore = create((set, get) => ({

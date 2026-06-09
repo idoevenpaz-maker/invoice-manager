@@ -45,6 +45,28 @@ const s = StyleSheet.create({
   sectionTitle: { fontSize: 9, fontWeight: 700, color: C.navy, marginBottom: 6, textAlign: 'right' },
   paymentText:  { fontSize: 9, color: C.gray700, lineHeight: 1.6, textAlign: 'right' },
   thankYou:     { marginTop: 28, textAlign: 'center', fontSize: 11, color: C.navy, fontWeight: 700 },
+  signatureSection: { marginTop: 24, flexDirection: 'row-reverse', justifyContent: 'flex-end', alignItems: 'center' },
+  signatureBadge: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    padding: '6 12',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    borderRadius: 6,
+  },
+  signatureBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#16a34a',
+    marginLeft: 6,
+  },
+  signatureBadgeText: {
+    color: '#15803d',
+    fontSize: 8.5,
+    fontWeight: 700,
+  },
   footer:       { position: 'absolute', bottom: 24, left: 40, right: 40, borderTopWidth: 1, borderTopColor: C.gray300, paddingTop: 8 },
   footerText:   { fontSize: 8, color: C.gray500, textAlign: 'center' },
 })
@@ -126,6 +148,16 @@ export function ReceiptPDF({ receipt, client, settings }) {
         {/* Notes */}
         {receipt.notes && (
           <Text style={[s.paymentText, { marginTop: 12 }]}>{receipt.notes}</Text>
+        )}
+
+        {/* Digital Signature Badge */}
+        {settings.showDigitalSignature && (
+          <View style={s.signatureSection}>
+            <View style={s.signatureBadge}>
+              <View style={s.signatureBadgeDot} />
+              <Text style={s.signatureBadgeText}>מסמך ממוחשב - נחתם דיגיטלית</Text>
+            </View>
+          </View>
         )}
 
         {settings.invoiceFooter && (

@@ -23,6 +23,7 @@ export function SettingsForm() {
     nextReceiptNumber: settings.nextReceiptNumber,
     paymentInfo: settings.paymentInfo,
     invoiceFooter: settings.invoiceFooter,
+    showDigitalSignature: settings.showDigitalSignature ?? false,
   })
 
   const set = (patch) => setForm(f => ({ ...f, ...patch }))
@@ -123,6 +124,25 @@ export function SettingsForm() {
             <Input type="number" label="מספר קבלה הבא" min="1" value={form.nextReceiptNumber} onChange={e => set({ nextReceiptNumber: parseInt(e.target.value) })} />
             <Input type="number" label='מע"מ ברירת מחדל (%)' min="0" max="100" step="any" value={form.defaultTaxRate} onChange={e => set({ defaultTaxRate: parseFloat(e.target.value) })} />
           </div>
+          
+          <div className="flex items-start gap-3 border border-gray-200 rounded-lg p-4 bg-gray-50/50 mt-2">
+            <input
+              type="checkbox"
+              id="showDigitalSignature"
+              checked={form.showDigitalSignature}
+              onChange={e => set({ showDigitalSignature: e.target.checked })}
+              className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 mt-1 cursor-pointer"
+            />
+            <div className="flex-1">
+              <label htmlFor="showDigitalSignature" className="text-sm font-medium text-gray-900 cursor-pointer block select-none">
+                הוסף חותמת ירוקה "נחתם דיגיטלית" על גבי מסמכי PDF
+              </label>
+              <p className="text-xs text-gray-500 mt-0.5">
+                יוסיף חותמת ירוקה מעוצבת בתחתית החשבוניות והקבלות המציינת כי המסמך ממוחשב ונחתם דיגיטלית.
+              </p>
+            </div>
+          </div>
+
           <Textarea label="טקסט תחתית (על כל המסמכים)" value={form.invoiceFooter} onChange={e => set({ invoiceFooter: e.target.value })} />
         </div>
       )}
