@@ -44,7 +44,7 @@ const s = StyleSheet.create({
   colTotal:      { flex: 1.5, textAlign: 'right' },
   thText:        { color: C.white, fontSize: 9, fontWeight: 700 },
   tdText:        { fontSize: 9, color: C.gray700 },
-  totalsSection: { marginTop: 12, alignItems: 'flex-end' },
+  totalsSection: { marginTop: 12, alignItems: 'flex-start' },
   totalsRow:     { flexDirection: 'row-reverse', justifyContent: 'space-between', width: 200, marginBottom: 4 },
   totalsLabel:   { fontSize: 9, color: C.gray500 },
   totalsValue:   { fontSize: 9, color: C.gray900, fontWeight: 700 },
@@ -178,13 +178,15 @@ export function InvoicePDF({ invoice, client, settings }) {
         ))}
 
         {/* Totals */}
-        <TotalsBlock
-          lineItems={invoice.lineItems}
-          taxRate={invoice.taxRate}
-          discountType={invoice.discountType}
-          discountValue={invoice.discountValue}
-          currency={invoice.currency}
-        />
+        <View style={{ flexDirection: 'row-reverse', justifyContent: 'flex-end' }}>
+          <TotalsBlock
+            lineItems={invoice.lineItems}
+            taxRate={invoice.taxRate}
+            discountType={invoice.discountType}
+            discountValue={invoice.discountValue}
+            currency={invoice.currency}
+          />
+        </View>
 
         {/* Payment info */}
         {settings.paymentInfo && (
