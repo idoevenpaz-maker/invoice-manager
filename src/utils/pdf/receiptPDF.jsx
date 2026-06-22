@@ -129,7 +129,7 @@ export function ReceiptPDF({ receipt, client, settings }) {
         ))}
 
         {/* Total */}
-        <View style={{ alignItems: 'flex-end' }}>
+        <View style={{ alignItems: 'flex-start' }}>
           <View style={s.totalRow}>
             <Text style={s.totalText}>סה"כ</Text>
             <Text style={s.totalText}>{fmt(total)}</Text>
