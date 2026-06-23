@@ -137,13 +137,17 @@ export function InvoiceForm({ initial, onSave, onCancel }) {
       </div>
 
       {/* Totals */}
-      <InvoiceTotals
-        lineItems={form.lineItems}
-        taxRate={form.taxRate}
-        discountType={form.discountType}
-        discountValue={form.discountValue}
-        currency={form.currency}
-      />
+      <div className="flex justify-start" style={{ direction: 'ltr' }}>
+        <div style={{ direction: 'rtl' }}>
+          <InvoiceTotals
+            lineItems={form.lineItems}
+            taxRate={form.taxRate}
+            discountType={form.discountType}
+            discountValue={form.discountValue}
+            currency={form.currency}
+          />
+        </div>
+      </div>
 
       {/* Notes */}
       <Textarea

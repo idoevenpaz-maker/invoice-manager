@@ -264,14 +264,16 @@ export function InvoiceDetailPage() {
         </table>
 
         {/* Totals */}
-        <div className="flex justify-end">
-          <InvoiceTotals
-            lineItems={invoice.lineItems}
-            taxRate={invoice.taxRate}
-            discountType={invoice.discountType}
-            discountValue={invoice.discountValue}
-            currency={invoice.currency}
-          />
+        <div className="flex justify-start" style={{ direction: 'ltr' }}>
+          <div style={{ direction: 'rtl' }}>
+            <InvoiceTotals
+              lineItems={invoice.lineItems}
+              taxRate={invoice.taxRate}
+              discountType={invoice.discountType}
+              discountValue={invoice.discountValue}
+              currency={invoice.currency}
+            />
+          </div>
         </div>
 
         {/* Payment info */}
