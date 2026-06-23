@@ -215,11 +215,12 @@ export function InvoicePDF({ invoice, client, settings }) {
         )}
 
         {/* Footer */}
-        {settings.invoiceFooter && (
-          <View style={s.footer}>
+        <View style={s.footer}>
+          {settings.invoiceFooter && (
             <Text style={s.footerText}>{settings.invoiceFooter}</Text>
-          </View>
-        )}
+          )}
+          <Text style={[s.footerText, { marginTop: 4, fontWeight: 700 }]}>מסמך ממוחשב</Text>
+        </View>
       </Page>
     </Document>
   )

@@ -293,11 +293,12 @@ export function InvoiceDetailPage() {
         )}
 
         {/* Footer */}
-        {settings.invoiceFooter && (
-          <div className="mt-8 pt-4 border-t border-gray-200 text-center">
-            <p className="text-xs text-gray-400">{settings.invoiceFooter}</p>
-          </div>
-        )}
+        <div className="mt-8 pt-4 border-t border-gray-200 text-center">
+          {settings.invoiceFooter && (
+            <p className="text-xs text-gray-400 mb-1">{settings.invoiceFooter}</p>
+          )}
+          <p className="text-xs text-gray-500 font-semibold">מסמך ממוחשב</p>
+        </div>
       </div>
 
       <ConfirmDialog
