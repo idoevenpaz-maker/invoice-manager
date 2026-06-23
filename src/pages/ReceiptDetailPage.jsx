@@ -235,15 +235,15 @@ export function ReceiptDetailPage() {
         <table className="w-full mb-6 text-sm">
           <thead>
             <tr className="bg-brand-500 text-white">
-              <th className="px-3 py-2 text-end rounded-r-md">תיאור</th>
-              <th className="px-3 py-2 text-end rounded-l-md">סכום</th>
+              <th className="px-3 py-2 text-right border-l border-white/20 rounded-r-md">תיאור</th>
+              <th className="px-3 py-2 text-right rounded-l-md w-36">סכום</th>
             </tr>
           </thead>
           <tbody>
             {receipt.items.map((item, i) => (
               <tr key={item.id} className={i % 2 === 1 ? 'bg-gray-50' : ''}>
-                <td className="px-3 py-2 text-end">{item.description}</td>
-                <td className="px-3 py-2 text-end font-mono">{formatCurrency(item.amount, receipt.currency)}</td>
+                <td className="px-3 py-2 text-right border-l border-gray-100">{item.description}</td>
+                <td className="px-3 py-2 text-right font-mono">{formatCurrency(item.amount, receipt.currency)}</td>
               </tr>
             ))}
           </tbody>

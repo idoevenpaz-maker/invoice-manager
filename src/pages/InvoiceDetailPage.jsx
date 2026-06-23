@@ -243,19 +243,19 @@ export function InvoiceDetailPage() {
         <table className="w-full mb-6 text-sm">
           <thead>
             <tr className="bg-brand-500 text-white">
-              <th className="px-3 py-2 text-end rounded-r-md">תיאור</th>
-              <th className="px-3 py-2 text-center">כמות</th>
-              <th className="px-3 py-2 text-end">מחיר יחידה</th>
-              <th className="px-3 py-2 text-end rounded-l-md">סה"כ</th>
+              <th className="px-3 py-2 text-right border-l border-white/20 rounded-r-md">תיאור</th>
+              <th className="px-3 py-2 text-center border-l border-white/20 w-20">כמות</th>
+              <th className="px-3 py-2 text-right border-l border-white/20 w-32">מחיר יחידה</th>
+              <th className="px-3 py-2 text-right rounded-l-md w-32">סה"כ</th>
             </tr>
           </thead>
           <tbody>
             {invoice.lineItems.map((item, i) => (
               <tr key={item.id} className={i % 2 === 1 ? 'bg-gray-50' : ''}>
-                <td className="px-3 py-2 text-end">{item.description}</td>
-                <td className="px-3 py-2 text-center font-mono">{item.quantity}</td>
-                <td className="px-3 py-2 text-end font-mono">{formatCurrency(item.unitPrice, invoice.currency)}</td>
-                <td className="px-3 py-2 text-end font-mono font-medium">
+                <td className="px-3 py-2 text-right border-l border-gray-100">{item.description}</td>
+                <td className="px-3 py-2 text-center border-l border-gray-100 font-mono">{item.quantity}</td>
+                <td className="px-3 py-2 text-right border-l border-gray-100 font-mono">{formatCurrency(item.unitPrice, invoice.currency)}</td>
+                <td className="px-3 py-2 text-right font-mono font-medium">
                   {formatCurrency(item.quantity * item.unitPrice, invoice.currency)}
                 </td>
               </tr>
