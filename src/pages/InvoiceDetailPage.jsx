@@ -264,7 +264,7 @@ export function InvoiceDetailPage() {
         </table>
 
         {/* Totals */}
-        <div className="flex justify-start">
+        <div className="flex justify-end">
           <InvoiceTotals
             lineItems={invoice.lineItems}
             taxRate={invoice.taxRate}

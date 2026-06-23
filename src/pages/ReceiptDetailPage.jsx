@@ -250,7 +250,7 @@ export function ReceiptDetailPage() {
         </table>
 
         {/* Total */}
-        <div className="flex justify-start">
+        <div className="flex justify-end">
           <div className="border-t-2 border-brand-500 pt-2 w-48">
             <div className="flex justify-between">
               <span className="font-mono font-bold text-brand-500 text-lg">{formatCurrency(total, receipt.currency)}</span>
