@@ -178,7 +178,7 @@ export function InvoicePDF({ invoice, client, settings }) {
         ))}
 
         {/* Totals */}
-        <View style={{ flexDirection: 'row-reverse', justifyContent: 'flex-end' }}>
+        <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'flex-start' }}>
           <TotalsBlock
             lineItems={invoice.lineItems}
             taxRate={invoice.taxRate}
