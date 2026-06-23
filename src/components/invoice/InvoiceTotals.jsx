@@ -8,7 +8,7 @@ export function InvoiceTotals({ lineItems, taxRate, discountType, discountValue,
   const fmt = v => formatCurrency(v, currency)
 
   return (
-    <div className="flex justify-start">
+    <div className="flex justify-end">
       <table className="text-sm w-64">
         <tbody>
           <tr className="text-gray-600">
